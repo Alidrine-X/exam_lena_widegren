@@ -1,7 +1,6 @@
-import entity
-from grid import Grid
-from player import Player
-from entity import Entity, Wall, Trap, Bomb
+from src.grid import Grid
+from src.player import Player
+from src.entity import Entity, Wall, Trap, Exit
 
 grid = Grid()
 player = Player()
@@ -9,18 +8,33 @@ player = Player()
 grid.make_outer_walls()
 grid.add_random_l_walls()
 grid.set_player(player)
-grid.randomize_items()
+grid.set_exit(player)
+
+# Ursprungliga edible märks med att de inte är nya
+grid.randomize_items(is_new=False)
 
 command = "a"
 # Loopa tills användaren trycker Q eller X.
 while not command.casefold() in ["q", "x"]:
     grid.print_status(player.score)
-    command = input("Use WASD to move, I for inventory, Q/X to quit. ").lower()
+    command = input("Use WASD to move, J+WASD to jump, I for inventory, Q/X to quit. ").lower()
     command = command.casefold()[:2]
 
     # Visa spelarens inventory
     if command == "i":
         player.show_inventory()
+
+    # Exit möjlig om spelaren plockat upp alla ursprungliga ätbara saker
+    if command == "e":
+        current_item = grid.get(player.pos_x, player.pos_y)
+
+        # Spelarens nuvarande position måste vara på E, om interact returnerar True, vinner man
+        if isinstance(current_item, Exit):
+            if current_item.interact(player, grid, player.pos_x, player.pos_y):
+                command = "q"  # Avslutar loopen
+        else:
+            print(f"You need to stand on E to Exit.")
+
 
     # Desarmera en fälla
     if command == "t":
@@ -31,6 +45,7 @@ while not command.casefold() in ["q", "x"]:
             current_item.disarm(grid, player.pos_x, player.pos_y)
         else:
             print(f"You need to stand on a trap to remove it.")
+
 
     # Placera ut en bomb
     if command == "b":
@@ -71,42 +86,8 @@ while not command.casefold() in ["q", "x"]:
     if direction_key in directions:
         dx, dy = directions[direction_key]
 
-        # Kolla vad som finns på första steget
-        step1_x = player.pos_x + dx
-        step1_y = player.pos_y + dy
-        step1_item = grid.get(step1_x, step1_y)
-
-        # Man kan aldrig hoppa ÖVER en vägg
-        if move_count == 2 and isinstance(step1_item, Wall):
-            print("Vägen är blockerad, du kan inte hoppa över väggar!")
-            continue
-
-        # Slutdestinationen blir ett eller två steg i angiven riktning
-        target_x = player.pos_x + (dx * move_count)
-        target_y = player.pos_y + (dy * move_count)
-        target_item = grid.get(target_x, target_y)
-
-        # Hantera om destinationen är en vägg, om yttervägg stå kvar
-        # om innervägg kontrollera om spade finns annars stå kvar
-        can_move = True
-        if isinstance(target_item, Wall):
-             if not target_item.try_to_demolish(player, grid, target_x, target_y):
-                can_move = False  # Stoppa flytten om väggen står kvar
-
-        # Flytta och dra poäng efter antal flyttade steg
-        if can_move:
-            player.pos_x = target_x
-            player.pos_y = target_y
-
-            for _ in range(move_count):
-                player.move_points()
-
-            # Lägg in i inventory om det ska sparas, justera poäng
-            if isinstance(target_item, Entity):
-                target_item.interact(player, grid, target_x, target_y)
-
-            # Uppdatera antal steg för bördig jord och nytt ätbart
-            grid.update_world(player)
+        # Anropa den nya metoden i grid
+        if grid.try_move_player(player, dx, dy, move_count):
 
             # Bombens stubin har brunnit ut
             if player.bomb_timer == 4:

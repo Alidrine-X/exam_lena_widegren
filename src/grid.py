@@ -1,7 +1,6 @@
 import random
 import time
-from entity import Wall, Key, Chest, Bomb, pickups, traps, tools, bombs
-
+from src.entity import Entity, Wall, Key, Chest, Bomb, Edible, edible_templates, traps, tools, bombs, Exit
 
 class Grid:
     """Representerar spelplanen. Du kan ändra standardstorleken och tecknen för olika rutor. """
@@ -17,7 +16,7 @@ class Grid:
         # sätta tecknet för "empty" på varje plats på spelplanen.
         self.data = [[self.empty for y in range(self.width)] for z in range(
             self.height)]
-
+        self.edibles_left = 0
 
     def get(self, x, y):
         """Hämta det som finns på en viss position. Returnera vägg om det är utanför spelplanen"""
@@ -30,32 +29,13 @@ class Grid:
         """Ändra vad som finns på en viss position"""
         self.data[y][x] = value
 
+    # Placera spelaren på mitten av spelplanen
     def set_player(self, player):
-        self.player = player
+        self.player = player  # <--- LÄGG TILL DENNA RAD
+        player.pos_x = self.width // 2
+        player.pos_y = self.height // 2
 
-        # Vi börjar med att titta på mitten av grid:en
-        target_x = self.width // 2
-        target_y = self.height // 2
-
-        # Om det inte är tomt i mitten, letar vi efter närmsta lediga ruta
-        # Vi letar i en fyrkant som blir större och större (offset 0, 1, 2...)
-        found = False
-        for offset in range(0, 10):
-            for dx in range(-offset, offset + 1):
-                for dy in range(-offset, offset + 1):
-                    # Testa en ny koordinat nära mitten
-                    test_x = target_x + dx
-                    test_y = target_y + dy
-
-                    # Kontroll om rutan är tom för placering av spelare
-                    if self.is_empty(test_x, test_y):
-                        self.player.pos_x = test_x
-                        self.player.pos_y = test_y
-                        found = True
-                        break  # Avbryt innersta loopen
-                if found: break  # Avbryt nästa loop
-            if found: break  # Avbryt yttersta loopen
-
+    # Rensa på spelplanen från något som plockats upp och sätt empty
     def clear(self, x, y):
         """Ta bort item från position"""
         self.set(x, y, self.empty)
@@ -77,42 +57,46 @@ class Grid:
         """Skapar oförstörbara ytterväggar runt hela spelplanen"""
         # Vertikala väggar (vänster och höger sida)
         for i in range(self.height):
-            self.set(0, i, Wall("Outer Wall", "█", destructible=False))
-            self.set(self.width - 1, i, Wall("Outer Wall", "█", destructible=False))
+            self.set(0, i, Wall("Outer Wall", "█", destructible=False, wall_id=None))
+            self.set(self.width - 1, i, Wall("Outer Wall", "█", destructible=False, wall_id=None))
 
         # Horisontella väggar (topp och botten)
         for j in range(1, self.width - 1):
-            self.set(j, 0, Wall("Outer Wall", "█", destructible=False))
-            self.set(j, self.height - 1, Wall("Outer Wall", "█", destructible=False))
+            self.set(j, 0, Wall("Outer Wall", "█", destructible=False, wall_id=None))
+            self.set(j, self.height - 1, Wall("Outer Wall", "█", destructible=False, wall_id=None))
 
     def add_random_l_walls(self, count=2):
-        """Placerar ut 'count' antal L-formade väggar på slumpmässiga platser."""
-        for _ in range(count):
-            # 1. Slumpa en startpunkt (undvik ytterväggarna)
-            # Vi lämnar marginal (4 steg) så att L-formen får plats
-            start_x = random.randint(2, self.width - 5)
-            start_y = random.randint(2, self.height - 3)
+        """Placerar ut 2 stycken L-formade väggar på fasta platser."""
 
-            # 2. Slumpa riktning (vänster/höger och upp/ner)
-            dir_x = random.choice([-1, 1])
-            dir_y = random.choice([-1, 1])
+        # Wall 1, rita ut höjd nedåt och längd vänster
+        start_wall_1_x = 9
+        start_wall_1_y = 3
 
-            # 3. Rita den horisontella delen (3-4 block lång)
-            length = random.randint(3, 7)
-            for i in range(length):
-                x = start_x + (i * dir_x)
-                # Vi kollar is_empty och player så vi inte skriver över andra saker
-                if self.is_empty(x, start_y):
-                    self.set(x, start_y, Wall("Inner Wall", "■", destructible=True))
+        new_wall_id_11 = ("W1", "S1")
+        for k in range(3):
+            self.set(start_wall_1_x, start_wall_1_y, Wall("Inner Wall", "■", True, wall_id=new_wall_id_11))
+            start_wall_1_y += 1
 
-            # 4. Rita den vertikala delen (2-3 block lång)
-            height = random.randint(2, 3)
-            for j in range(1, height + 1):
-                y = start_y + (j * dir_y)
-                if self.is_empty(start_x, y):
-                    self.set(start_x, y, Wall("Inner Wall", "■", destructible=True))
+        new_wall_id_12 = ("W1", "S2")
+        for l in range(5):
+            self.set(start_wall_1_x, start_wall_1_y, Wall("Inner Wall", "■", True, wall_id=new_wall_id_12))
+            start_wall_1_x -= 1
 
-    # Används i filen pickups.py
+        # Wall 2, rita ut höjd nedåt och längd höger
+        start_wall_2_x = 23
+        start_wall_2_y = 5
+
+        new_wall_id_21 = ("W2", "S1")
+        for k in range(3):
+            self.set(start_wall_2_x, start_wall_2_y, Wall("Inner Wall", "■", True, wall_id=new_wall_id_21))
+            start_wall_2_y += 1
+
+        new_wall_id_22 = ("W2", "S2")
+        for l in range(5):
+            self.set(start_wall_2_x, start_wall_2_y, Wall("Inner Wall", "■", True, wall_id=new_wall_id_22))
+            start_wall_2_x += 1
+
+    # Används i filen entity.py
     def get_random_x(self):
         """Slumpa en x-position på spelplanen"""
         return random.randint(0, self.width-1)
@@ -145,19 +129,67 @@ class Grid:
         print(f"You have {score} points.")
         print(self)
 
-    def place_items_from_list(self, item_list):
-        for item in item_list:
+    def try_move_player(self, player, dx, dy, move_count):
+        """
+        Försöker flytta spelaren move_count steg i riktningen dx, dy.
+        Returnerar True om flytten (och eventuella rivningar) genomfördes.
+        """
+        # Scanna vägen för hinder (1 eller 2 steg framåt)
+        for i in range(1, move_count + 1):
+            check_x = player.pos_x + (dx * i)
+            check_y = player.pos_y + (dy * i)
+            item = self.get(check_x, check_y)
+
+            if isinstance(item, Wall):
+                # Försök riva väggen. Om det misslyckas stannar vi helt.
+                if not item.try_to_demolish(player, self):
+                    return False
+
+        # Om vi kom hit är vägen fri (eller röjd). Genomför flytten.
+        player.pos_x += (dx * move_count)
+        player.pos_y += (dy * move_count)
+
+        # Uppdatera poäng och bördig jord för varje steg som tagits
+        for _ in range(move_count):
+            player.move_points()
+
+        # Interagera med det som finns på slutdestinationen
+        final_item = self.get(player.pos_x, player.pos_y)
+        if isinstance(final_item, Entity):
+            final_item.interact(player, self, player.pos_x, player.pos_y)
+
+        # Uppdatera världen med nytt ätbart tack vare bördig jord
+        self.update_world(player)
+
+        return True
+
+
+    def place_items_from_list(self, item_list, is_new=False):
+        for template in item_list:
+            if isinstance(template, Edible):
+                # Skapa nya objekt för Edibles som läggs ut på spelplanen
+                spawned_item = type(template)(name=template.name, symbol=template.symbol, points=template.points, is_new=is_new)
+
+                # Original-ätbara saker räknas för att sedan veta när alla är upplockade
+                if not spawned_item.is_new:
+                    self.edibles_left += 1
+
+            else:
+                # Skapa nya objekt för övrigt som läggs ut på spelplanen
+                spawned_item = type(template)(name=template.name, symbol=template.symbol, points=template.points)
+
+
             while True:
                 # Slumpa en position tills vi hittar en som är ledig
                 x = self.get_random_x()
                 y = self.get_random_y()
-                if self.is_empty(x, y) and (x != self.player.pos_x or y != self.player.pos_y):
-                    self.set(x, y, item)
+                if self.is_empty(x, y):
+                    self.set(x, y, spawned_item)
                     break
 
-    def randomize_items(self):
+    def randomize_items(self, is_new):
         """Huvudfunktion som placerar ut allt i spelet."""
-        self.place_items_from_list(pickups)
+        self.place_items_from_list(edible_templates, is_new)
         self.place_items_from_list(traps)
         self.place_items_from_list(tools)
         self.place_items_from_list(bombs)
@@ -170,22 +202,25 @@ class Grid:
             self.place_items_from_list([key])
             self.place_items_from_list([chest])
 
-    def spawn_random_consumable(self):
+    def spawn_random_edible(self, is_new):
         """Väljer ut EN slumpmässig grönsak från listan och placerar på griden."""
-        # Välj ett objekt-template från den importerade listan 'pickups'
-        new_pickup = random.choice(pickups)
+        # Välj ett objekt-template från den importerade listan 'edible_templates'
+        new_edible = random.choice(edible_templates)
 
         # Skicka föremålet i en lista för utplacering i grid
-        self.place_items_from_list([new_pickup])
+        self.place_items_from_list([new_edible], is_new)
 
-        # Returnera namnet så att game.py kan skriva ut det
-        return new_pickup.name
+        # Returnera namnet så att game_new.py kan skriva ut det
+        return new_edible.name
 
+    # När spelaren tagit 25 steg läggs något nytt ätbart till
+    # Det markeras att det är nytt med is_new
     def update_world(self, player):
         if player.fertile_soil >= 25:
-            name = self.spawn_random_consumable()
+            is_new = True
+            name = self.spawn_random_edible(is_new)
             print(f"🌱 A new {name} grew from the fertile soil!")
-            player.fertile_soil = 0
+            player.fertile_soil -= 25
 
     def detonate_bomb(self, player):
         for y in range(self.height):
@@ -215,3 +250,12 @@ class Grid:
 
                     return  # Vi hittade och sprängde bomben, vi kan sluta leta
 
+    def set_exit(self, player):
+        while True:
+            # Slumpa en position tills vi hittar en som är ledig
+            x = self.get_random_x()
+            y = self.get_random_y()
+            if self.is_empty(x, y) and (x != player.pos_x or y != player.pos_y):
+                new_exit = Exit()
+                self.set(x, y, new_exit)
+                break
