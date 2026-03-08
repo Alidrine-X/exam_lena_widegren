@@ -1,7 +1,20 @@
+"""
+player.py
+
+Definierar Player-klassen för Fruit Loop.
+
+Håller reda på spelarens position, poäng, inventory, grace-period, bomb-timer
+och bördighet. Innehåller metoder för förflyttning, steg-uppdatering,
+visning av inventory och kontroll av om spelaren lever.
+"""
+
+#==============================================================================
+
 class Player:
-    marker = "@"
+    marker = "@"    # Symbol som representerar spelaren i spelvärlden
 
     def __init__(self, x=None, y=None):
+        """Initierar spelarens position, poäng, timers och inventory."""
         self.pos_x = x
         self.pos_y = y
         self.score = 10
@@ -12,15 +25,13 @@ class Player:
 
 
     def move(self, dx, dy):
-        """Flyttar spelaren.\n
-        dx = horisontell förflyttning, från vänster till höger\n
-        dy = vertikal förflyttning, uppifrån och ned"""
+        """Flyttar spelaren dx steg horisontellt och dy steg vertikalt."""
         self.pos_x += dx
         self.pos_y += dy
 
 
     def move_points(self):
-        """Hanterar poängavdrag (eller grace) och bördighet för ett utfört steg."""
+        """Uppdaterar poäng, grace-period och bördig jord per utfört steg."""
         if self.grace_period > 0:
             self.grace_period -= 1
         else:
@@ -33,8 +44,8 @@ class Player:
 
 
     def show_inventory(self):
-        """Visa spelaren innehållet i inventory vid kommande I"""
-        if not self.inventory :
+        """Visar spelarens innehåll i inventory med kommando I"""
+        if not self.inventory:
             print(f"\nYour inventory is empty")
             return
 

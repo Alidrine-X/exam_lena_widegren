@@ -1,19 +1,32 @@
+"""
+Grid.py
+
+Startpunkt för spelets rutnät och objekts-hantering, inklusive spelarposition
+och föremål.
+
+Initierar och lagrar spelets rutnät med tomma rutor (= en punkt "."), väggar
+och objekt. Håller reda på spelarens position, placerade föremål och antalet
+ursprungliga ätbara saker. Innehåller metoder för att läsa och skriva till
+rutor, kontrollera lediga rutor samt visa spelets status.
+"""
+
+#==============================================================================
+
 import random
 from src.objects import Wall
 
 class Grid:
-    """Representerar spelplanen. Du kan ändra standardstorleken och tecknen för olika rutor. """
+    """Representerar spelvärlden med rutnät, väggar, objekt och spelarposition
+    samt metoder för interaktion med rutorna."""
     width = 36
     height = 12
-    empty = "."  # Tecken för en tom ruta
-    wall = "■"   # Tecken för en ogenomtränglig vägg
+    empty = "."
+    wall = "■"
     blast = "X"
 
 
     def __init__(self):
-        """Skapa ett objekt av klassen Grid. Spelplanen lagras i en lista av listor.
-        Vi använder "list comprehension" för att sätta tecknet för "empty" på varje
-        plats på spelplanen."""
+        """Initierar spelvärlden, lagrar tomma rutor och förbereder spelaren och poängräkning."""
         self.data = [[self.empty for y in range(self.width)] for z in range(
             self.height)]
         self.player = None
@@ -21,7 +34,7 @@ class Grid:
 
 
     def __str__(self):
-        """Gör så att vi kan skriva ut spelplanen med print(grid)"""
+        """Returnerar en sträng som visar hela spelvärlden med objekt och spelaren."""
         xs = ""
         for y in range(len(self.data)):
             row = self.data[y]
@@ -35,7 +48,7 @@ class Grid:
 
 
     def get(self, x, y):
-        """Hämta det som finns på en viss position. Returnera vägg om det är utanför spelplanen"""
+        """Returnerar objektet på en given position, eller en vägg om positionen är utanför spelvärlden."""
         if 0 <= x < self.width and 0 <= y < self.height:
             return self.data[y][x]
 
@@ -43,34 +56,34 @@ class Grid:
 
 
     def set(self, x, y, value):
-        """Placerar ett objekt på en specifik koordinat i spelvärlden"""
+        """Sätter ett objekt på angiven position i spelvärlden."""
         self.data[y][x] = value
 
 
     def clear(self, x, y):
-        """Ta bort item från position på spelplanen av något som plockats upp och sätt empty """
+        """Tar bort objekt från positionen och markerar rutan som tom."""
         self.set(x, y, self.empty)
 
 
     def print_status(self, score):
-        """Visa spelvärlden och antal poäng."""
+        """Skriver ut hela spelvärlden och spelarens aktuella poäng."""
         print("--------------------------------------")
         print(f"You have {score} points.")
         print(self)
 
 
     def get_random_x(self):
-        """Slumpa en x-position på spelplanen"""
+        """Returnerar en slumpad x-position i spelvärlden."""
         return random.randint(0, self.width-1)
 
 
     def get_random_y(self):
-        """Slumpa en y-position på spelplanen"""
+        """Returnerar en slumpad y-position i spelvärlden."""
         return random.randint(0, self.height-1)
 
 
     def is_empty(self, x, y):
-        """Kontrollerar om en ruta är ledig från både föremål och spelare"""
+        """Returnerar True om rutan är tom, inom spelvärldens gränser, och spelaren inte står där."""
 
         # Kolla yttre gränser av grid
         if not (0 <= x < self.width and 0 <= y < self.height):
@@ -85,4 +98,3 @@ class Grid:
                 return False
 
         return True  # Hittade inget hinder
-

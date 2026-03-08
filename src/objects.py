@@ -1,8 +1,17 @@
+"""
+objects.py
+
+Definierar alla spelobjekt i Fruit Loop; ätbart, verktyg, fällor, nycklar,
+kistor, väggar och utgång. Varje klass hanterar sin egen interaktion
+med spelaren och spelvärlden.
+"""
+
+#==============================================================================
+
 class Entity:
     def __init__(self, name, symbol):
         self.name = name
         self.symbol = symbol
-        self.blocks_movement = False  # Standard: spelaren kan gå på allt
 
     def interact(self, player, grid, target_x, target_y):
         """Standardinteraktion: gör ingenting"""
@@ -13,7 +22,7 @@ class Entity:
 
 
 class Edible(Entity):
-    """Ätbart som plockas upp och läggs i inventory och ger spelare gratis steg"""
+    """Ätbart plockas upp, läggs i inventory och ger spelare gratis steg (grace_period)."""
     def __init__(self, name, symbol, points, is_new=True):
         super().__init__(name, symbol)
         self.points = points
@@ -32,8 +41,8 @@ class Edible(Entity):
 
 
 class Tool(Entity):
-    """Verktyg som plockas upp läggs i inventory och kan användas till att ta
-    bort innervägg. Verktyget tas bort när den använts"""
+    """Verktyg plockas upp, läggs i inventory och kan användas till att ta
+    bort innervägg. Verktyget tas bort när det använts"""
     def __init__(self, name, symbol):
         super().__init__(name, symbol)
         self.can_dig = True
@@ -46,8 +55,8 @@ class Tool(Entity):
 
 
 class Bomb(Entity):
-    """Bomb som plockas upp och läggs i inventory och spränger 3 x 3 rutor.
-    Bomben tas bort från inventory när den placerats ut och sätts till placed
+    """Bomb plockas upp, läggs i inventory och kan spränga 3 x 3 rutor. Bomben
+    tas bort från inventory när den placerats ut och sätts till placed
     för att inte kunna plockas upp igen"""
     def __init__(self, name, symbol):
         super().__init__(name, symbol)
@@ -65,7 +74,7 @@ class Bomb(Entity):
 
 
 class Key(Entity):
-    """Nyckel som plockas upp och läggs i inventory och kan låsa upp en kista.
+    """Nyckel plockas upp, läggs i inventory och kan låsa upp en kista.
     Nyckeln tas bort från inventory när den använts"""
     def __init__(self, name, symbol):
         super().__init__(name, symbol)
@@ -79,8 +88,8 @@ class Key(Entity):
 
 
 class Chest(Entity):
-    """Skattkista som ger poäng om spelare öppnar den med en nyckel.
-    Kistan tas bort när den öppnas"""
+    """Skattkista ger poäng när spelare öppnar den med en nyckel. Kistan
+    tas bort när den öppnats"""
     def __init__(self, name, symbol, points):
         super().__init__(name, symbol)
         self.points = points
@@ -99,7 +108,8 @@ class Chest(Entity):
 
 
 class Trap(Entity):
-    """Fälla som ger minuspoäng varje gång spelaren går på rutan"""
+    """Fälla ger minuspoäng varje gång spelaren går på rutan. Fälla kan tas
+    bort med kommando T"""
     def __init__(self, name, symbol, points):
         super().__init__(name, symbol)
         self.points = points
@@ -114,17 +124,17 @@ class Trap(Entity):
 
 
 class Wall(Entity):
-    """Två typer av väggar, yttervägg som inte kan krossas och innervägg som
-    kan tas bort med en spade"""
+    """Två typer av vägg skapas, yttervägg som inte kan krossas och innervägg som
+    kan tas bort med hjälp av en spade"""
     def __init__(self, name="Wall", symbol="■", destructible=False, wall_id=None):
         super().__init__(name, symbol)
         self.destructible = destructible
         self.wall_id = wall_id
-        self.blocks_movement = True  # Väggar blockerar alltid rörelse initialt
 
     def interact(self, player, grid, target_x, target_y):
         pass
 
+    # Försöker gå in eller hoppa över en vägg.
     def try_to_demolish(self, player, grid):
         # Om väggen inte kan förstöras (yttervägg)
         if not self.destructible:
@@ -140,7 +150,7 @@ class Wall(Entity):
             # Spara väggens ID före rivning av vägg
             target_id = self.wall_id
 
-            # Loopa igenom hela grid:en och ta bort alla väggbitar med samma ID
+            # Loopa igenom hela spelvärlden och ta bort alla väggbitar med samma ID
             for y in range(grid.height):
                 for x in range(grid.width):
                     target_item = grid.get(x, y)
@@ -157,7 +167,7 @@ class Wall(Entity):
 
 
 class Exit(Entity):
-    """Utgång från spelet när alla ätbara saker som placerades ut från början är upplockade"""
+    """Avslutar spelet med kommando E om alla ursprungliga ätbara saker är upplockade"""
     def __init__(self, name= "Portal", symbol= "E"):
         super().__init__(name, symbol)
 
@@ -170,6 +180,7 @@ class Exit(Entity):
             return True
 
 
+# Mallar för slumpmässig placering i spelvärlden, används av builder.py
 edible_templates = [
     Edible("carrot", "?", 20, False),
     Edible("apple", "?", 20, False),

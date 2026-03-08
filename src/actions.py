@@ -1,13 +1,22 @@
+"""
+actions.py
+
+Hanterar spelarens kommandon och deras effekter i spelvärlden.
+Innehåller rörelse, fällor, bombhantering, spawn av nytt ätbart
+och spelets avslut via exit.
+"""
+
+#==============================================================================
+
 import random
 import time
 from src.builder import place_items_from_list
 from src.objects import Bomb, Entity, Exit, Trap, Wall, edible_templates
 
 
-# ---------------------------------------------------------------------
-# Funktioner som hanterar vad spelaren önskar göra och som
-# avgör om spelare kan/får flytta sig
-# ---------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Funktioner som hanterar spelarens kommandon och rörelser
+# -----------------------------------------------------------------------------
 
 # Dictionary med alla giltiga kommandon
 commands = {
@@ -29,10 +38,9 @@ commands = {
 
 
 def try_move_player(grid, player, dx, dy, move_count):
-    """ Försöker flytta spelaren move_count steg i riktningen dx, dy.
-    Returnerar True om flytten (och eventuella rivningar) genomfördes. """
+    """Flyttar spelaren move_count steg och returnerar True om flytten lyckades."""
 
-    # Scanna vägen för hinder (1 eller 2 steg framåt)
+    # Skannar vägen för hinder (1 eller 2 steg framåt)
     for i in range(1, move_count + 1):
         check_x = player.pos_x + (dx * i)
         check_y = player.pos_y + (dy * i)
@@ -40,23 +48,23 @@ def try_move_player(grid, player, dx, dy, move_count):
 
         if isinstance(item, Wall):
 
-            # Försök riva väggen. Om det misslyckas stannar vi helt.
+            # Försöker riva väggen. Om det misslyckas stannar vi helt.
             if not item.try_to_demolish(player, grid):
                 return False
 
-    # Om vi kom hit är vägen fri (eller röjd). Genomför flytten.
+    # Genomför flytten om vägen hit var fri (eller röjd).
     player.move(dx * move_count, dy * move_count)
 
-    # Uppdatera poäng och bördig jord för varje steg som tagits
+    # Uppdaterar poäng och bördig jord för varje steg som tagits
     for _ in range(move_count):
         player.move_points()
 
-    # Interagera med det som finns på slutdestinationen
+    # Interagerar med det som finns på slutdestinationen
     final_item = grid.get(player.pos_x, player.pos_y)
     if isinstance(final_item, Entity):
         final_item.interact(player, grid, player.pos_x, player.pos_y)
 
-    # Uppdatera världen med nytt ätbart tack vare bördig jord
+    # Uppdaterar världen med nytt ätbart tack vare bördig jord
     update_world(grid, player)
 
     return True
@@ -66,7 +74,6 @@ def try_disarm_trap(grid, player):
     """Med kommando T, tas fälla bort om spelaren står på den"""
     current_item = grid.get(player.pos_x, player.pos_y)
 
-    # Spelarens nuvarande position måste vara på fällan
     if isinstance(current_item, Trap):
         current_item.disarm(grid, player.pos_x, player.pos_y)
     else:
@@ -74,10 +81,10 @@ def try_disarm_trap(grid, player):
 
 
 def try_place_bomb(grid, player):
-    """Med kommando B, placerar bomb ut på spelplanen där spelaren står"""
+    """Med kommando B, placeras bomb ut i spelvärlden där spelaren står"""
     bomb = next((i for i in player.inventory if getattr(i, 'can_explode', False)), None)
 
-    # Om bomb finns i inventory, spelare inte är för nära väggen så tänd stubinen
+    # Tänder bomben, om bomb finns i inventory och spelare är tillräckligt långt från väggen
     if bomb:
         if (1 < player.pos_x < grid.width - 2) and (1 < player.pos_y < grid.height - 2):
             player.bomb_timer = 1   # Start timer (1 = bomb placed, explosion after >=4)
@@ -93,10 +100,9 @@ def try_place_bomb(grid, player):
 
 
 def try_exit_game(grid, player):
-    """Med kommando E, vinner spelaren om allt ätbart från originaluppsättningen är upplockat"""
+    """Med kommando E, avslutas spelet om alla ursprungliga ätbara saker är upplockade."""
     current_item = grid.get(player.pos_x, player.pos_y)
 
-    # Spelarens nuvarande position måste vara på E, om interact returnerar True, vinner man
     if isinstance(current_item, Exit):
         if current_item.interact(player, grid, player.pos_x, player.pos_y):
             return True
@@ -105,25 +111,24 @@ def try_exit_game(grid, player):
 
     return False
 
-# ---------------------------------------------------------------------
-# Metoder som körs automatiskt eller som en konsekvens av en handling
-# ---------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Funktioner som körs automatiskt eller som en konsekvens av en handling
+# -----------------------------------------------------------------------------
 
 def spawn_random_edible(grid, is_new):
-    """Väljer ut något slumpmässig ätbart från originallistan och placerar på grid."""
-    # Välj ett objekt-template från den importerade listan 'edible_templates'
+    """Väljer ut något slumpmässig ätbart från originallistan och placerar i spelvärlden."""
+    # Väljer ett objekt-template från den importerade listan 'edible_templates'
     new_edible = random.choice(edible_templates)
 
-    # Skicka föremålet i en lista för utplacering i grid
+    # Skickar föremålet i en lista för utplacering i grid
     place_items_from_list(grid,[new_edible], is_new)
 
-    # Returnera namnet så att game_new.py kan skriva ut det
+    # Returnerar namnet så att game_new.py kan skriva ut det
     return new_edible.name
 
 
 def update_world(grid, player):
-    """När spelaren tagit 25 steg läggs något nytt ätbart till. Det markeras att det är
-    tillagt i efterhand med is_new"""
+    """Lägger till nytt ätbart i spelvärlden när spelaren tagit 25 steg (med is_new=True)."""
     if player.fertile_soil >= 25:
         is_new = True
         name = spawn_random_edible(grid, is_new)
@@ -132,7 +137,7 @@ def update_world(grid, player):
 
 
 def detonate_bomb(grid, player):
-    """Detonerar bomb när spelaren plockat upp bomb, placerat ut bomb och gått 3 steg"""
+    """Detonerar bomben när spelaren plockat upp den, placerat ut den och gått 3 steg"""
     for y in range(grid.height):
         for x in range(grid.width):
 
@@ -140,24 +145,23 @@ def detonate_bomb(grid, player):
             if isinstance(grid.get(x, y), Bomb):
                 print("\n💥 TICK... TICK... BOOM!")
 
-                # Rita ut explosionen först i 3x3
+                # Ritar ut explosionen först i 3x3
                 for dy in range(-1, 2):
                     for dx in range(-1, 2):
                         grid.set(x + dx, y + dy, grid.blast)
 
-                print(grid)  # Skriv ut grid så spelaren ser explosionen
-                time.sleep(0.5)  # Pausa i en halv sekund så man hinner se!
+                # Skriver ut grid och pausar, så spelaren hinner se explosionen
+                print(grid)
+                time.sleep(0.5)
 
-                # Faktisk rensning i 3x3
+                # Rensar i 3x3 runt bomben
                 for dy in range(-1, 2):
                     for dx in range(-1, 2):
                         grid.clear(x + dx, y + dy)
 
-                # Spelaren stod i vägen
+                # Kontrollerar om spelaren träffas av explosionen
                 if abs(player.pos_x - x) <= 1 and abs(player.pos_y - y) <= 1:
                     print("\nAargh! You got caught in the blast wave!")
                     player.score -= 20
 
                 return  # Vi hittade och sprängde bomben, vi kan sluta leta
-
-

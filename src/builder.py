@@ -1,11 +1,17 @@
+"""
+builder.py
+
+Skapar och placerar ut väggar, föremål, spelare och exit i spelets rutnät.
+Innehåller metoder som körs vid spelets start för att bygga upp banan.
+"""
+
+#==============================================================================
+
 from src.objects import Edible, Exit, Chest, Key, Trap, Wall, edible_templates, traps, tools, bombs
 
-# ---------------------------------------------------------------------
-# Metoder som körs en gång när spelet startar.
-# ---------------------------------------------------------------------
 
 def make_outer_walls(grid):
-    """Skapar oförstörbara ytterväggar runt hela spelplanen"""
+    """Skapar oförstörbara ytterväggar runt hela spelvärlden"""
     # Vertikala väggar (vänster och höger sida)
     for i in range(grid.height):
         grid.set(0, i, Wall("Outer Wall", "█", destructible=False, wall_id=None))
@@ -18,7 +24,7 @@ def make_outer_walls(grid):
 
 
 def add_l_walls(grid):
-    """Placerar ut 2 stycken L-formade väggar på fasta platser"""
+    """Placerar ut 2 stycken L-formade innerväggar på fasta platser. Väggarna kan rivas med verktyg"""
 
     # Wall 1, rita ut höjd nedåt och längd vänster
     start_wall_1_x = 9
@@ -50,14 +56,14 @@ def add_l_walls(grid):
 
 
 def set_player(grid, player):
-    """Placera spelaren på mitten av spelplanen"""
+    """Placerar spelaren på mitten av spelvärlden"""
     grid.player = player
     player.pos_x = grid.width // 2
     player.pos_y = grid.height // 2
 
 
 def place_items_from_list(grid, item_list, is_new=False):
-    """Skapar unika instanser av objekt från mallar och sprider ut dem på griden"""
+    """Skapar instanser av objekt från mallar och placerar dem slumpmässigt i spelvärlden."""
     for template in item_list:
         if isinstance(template, Edible):
             spawned_item = Edible(name=template.name, symbol=template.symbol, points=template.points, is_new=is_new)
@@ -82,8 +88,9 @@ def place_items_from_list(grid, item_list, is_new=False):
                 grid.set(x, y, spawned_item)
                 break
 
+
 def randomize_items(grid, is_new):
-    """Huvudfunktion som placerar ut allt i spelet."""
+    """Huvudfunktion som slumpmässigt placerar ut alla objekt i spelets värld, inklusive kistor och nycklar."""
     place_items_from_list(grid, edible_templates, is_new)
     place_items_from_list(grid,traps)
     place_items_from_list(grid,tools)
@@ -99,7 +106,7 @@ def randomize_items(grid, is_new):
 
 
 def set_exit(grid, player):
-    """Placera ut E för exit på ledig position"""
+    """Placerar ut spelets utgång (E) på en ledig position."""
     while True:
         x = grid.get_random_x()
         y = grid.get_random_y()
@@ -107,5 +114,3 @@ def set_exit(grid, player):
             new_exit = Exit()
             grid.set(x, y, new_exit)
             break
-
-
