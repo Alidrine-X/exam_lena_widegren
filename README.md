@@ -10,7 +10,7 @@ Börja läs igenom game.py - det är där projektet startas.
 python -m src.game
 ```
 
-Fruit Loop – Terminalbaserat spel
+Fruit Loop
 
 Fruit Loop är ett terminalbaserat spel där spelaren navigerar i en rutnätsbaserad spelvärld. Målet är att samla upp alla ursprungliga ätbara föremål, undvika fällor, använda verktyg och eventuellt placera och detonera bomber för att röja väggar eller hinder. När alla ätbara föremål är upplockade kan spelaren gå till utgången (E) för att vinna.
 <br>
