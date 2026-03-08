@@ -10,48 +10,67 @@ Börja läs igenom game.py - det är där projektet startas.
 python -m src.game
 ```
 
-Fruit Loop är ett terminalbaserat äventyrsspel där spelaren navigerar på ett rutnätsbaserat spelbräde. Målet är att samla alla ursprungliga ätbara föremål, undvika fällor, använda verktyg och eventuellt placera och detonera bomber för att röja väggar eller hinder. När alla ätbara föremål är upplockade kan spelaren nå utgången (E) för att vinna spelet.
+Perfekt! Här är en snygg och detaljerad version av din README-text för Fruit Loop, med rubriker, punktlistor och tydlig struktur:
 
-Vad spelaren kan göra
+Fruit Loop – Terminalbaserat spel
 
-Rörelse:
+Fruit Loop är ett terminalbaserat spel där spelaren navigerar i en rutnätsbaserad spelvärld. Målet är att samla upp alla ursprungliga ätbara föremål, undvika fällor, använda verktyg och eventuellt placera och detonera bomber för att röja väggar eller hinder. När alla ätbara föremål är upplockade kan spelaren gå till utgången (E) för att vinna.
 
-Gå: W, A, S, D (1 steg)
+Spelets mål
 
-Hoppa: JW, JA, JS, JD (2 steg)
+Samla alla ursprungliga ätbara föremål som finns på spelplanen.
 
-Samla föremål till inventory:
+Undvik att få minuspoäng genom fällor.
 
-Ätbart: ger poäng och gratis steg (grace-period)
+Använd verktyg, nycklar och eventuellt bomber för att röja vägar och låsa upp kistor.
 
-Verktyg (spade): kan riva innerväggar
+När alla ursprungliga ätbara föremål är upplockade, nå utgången (E) för att vinna spelet.
 
-Nycklar: låser upp kistor
+Spelarens handlingar
+Rörelse
 
-Bomb: kan placeras och explodera i 3×3-rutor
+Gå: W (upp), A (vänster), S (ned), D (höger)
 
-Interaktion med objekt:
+Hoppa: JW, JA, JS, JD – hoppa över två rutor i angiven riktning
 
-Ätbart: ökar poäng och grace-period
+Samla föremål till inventory
 
-Verktyg: kan användas för att riva innerväggar
+Ätbart (t.ex. morot, äpple) – ger poäng och 5 steg grace-period
 
-Nyckel: låser upp kistor
+Verktyg (shovel/spade) – kan riva innerväggar
 
-Kistor: ger poäng
+Nycklar – kan låsa upp kistor
 
-Bomb: kan placeras och explodera i 3×3-område
+Bomb – kan placeras på spelplanen och explodera i ett 3×3-område
 
-Fällor: ger minuspoäng, kan desarmeras med kommando T
+Interagera med objekt
 
-Exit: kan användas när alla ursprungliga ätbara föremål är upplockade med kommando E
+Ätbart: ökar poäng, ger grace-period
 
-Poäng och spelmekanik
+Verktyg: används för att riva innerväggar
 
-Spelaren börjar med 10 poäng.
+Nyckel + kista: låser upp kistor som ger poäng
 
-Poängen minskar med 1 per steg, men stoppar under grace-period (5 steg) när ett ätbart föremål plockas upp.
+Bomb: placera med B och explodera efter tre steg
 
-Varje steg ökar spelarens fertile_soil, vilket genererar ett nytt ätbart föremål efter 25 steg.
+Fälla: ger minuspoäng; kan desarmeras med T
 
-Bomb-timer startar när bomben placeras i spelvärlden och exploderar efter att spelaren tagit 3 steg.
+Exit (E): spelaren kan gå ut när alla ursprungliga ätbara föremål är upplockade
+
+Poäng och mekanik
+
+Spelaren startar med 10 poäng.
+
+Varje steg minskar poängen med 1, men grace-perioden efter att ha plockat upp ett ätbart föremål stoppar poängavdrag i 5 steg.
+
+Fertile soil: varje steg ökar värdet; efter 25 steg genereras ett nytt slumpmässigt ätbart föremål på spelplanen.
+
+Bomb-timer: startar när bomb placeras ut; exploderar efter att spelaren tagit 3 steg.
+
+Tips
+
+Planera dina steg och inventory-användning för att maximera poäng och effektivitet.
+
+Håll koll på fällor och använd verktyg smart för att nå svåråtkomliga områden.
+
+När alla ätbara föremål är samlade, gå till E för att avsluta spelet och vinna.
